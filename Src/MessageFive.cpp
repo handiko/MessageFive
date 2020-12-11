@@ -60,11 +60,13 @@ void MessageFive::sendBit(bool bit)
 	{
 		outputPorts.wavePort->BSRR = outputPorts.wavePin;
 		outputPorts.scopePort->BSRR = outputPorts.scopePin;
+		outputPorts.soundPort->BSRR = outputPorts.soundPin;
 	}
 	else
 	{
 		outputPorts.wavePort->BRR = outputPorts.wavePin;
 		outputPorts.scopePort->BRR = outputPorts.scopePin;
+		outputPorts.soundPort->BRR = outputPorts.soundPin;
 	}
 }
 

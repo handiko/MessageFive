@@ -27,15 +27,18 @@
 struct MSG5_OutputPorts_t {
 	GPIO_TypeDef* wavePort;
 	GPIO_TypeDef* scopePort;
-
+	GPIO_TypeDef* soundPort;
 	uint16_t wavePin;
 	uint16_t scopePin;
+	uint16_t soundPin;
 };
 
 struct MSG5_NrziCoding_t {
 	bool flag = DISABLE_NRZI;
 	bool transmitBit = 0;
 };
+
+
 
 class MessageFive {
 private:
@@ -68,6 +71,10 @@ private:
 	MSG5_OutputPorts_t outputPorts;
 	bool startStopFlag = STOP;
 	MSG5_NrziCoding_t nrzi;
+	struct MSG5_Ticks_t {
+		uint16_t benchmark = 0;
+		uint16_t randomBits = 0;
+	} Ticks;
 
 	uint8_t getMode(void);
 	void runBenchmark(void);
