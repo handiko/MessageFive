@@ -11,6 +11,7 @@ MessageFive::MessageFive() {
 	// TODO Auto-generated constructor stub
 	mode = MODE_BENCHMARK;
 	startStopFlag = STOP;
+	nrzi.flag = DISABLE_NRZI;
 }
 
 /*
@@ -21,28 +22,41 @@ uint8_t MessageFive::getMode(void)
 	return mode;
 }
 
-bool* MessageFive::getBenchmarkMessage(void)
-{
-	return benchmarkMessage5;
-}
-
 void MessageFive::runBenchmark(void)
 {
-	if(getBenchmarkMessage()[msgTick] % 2)
+	bool tmp = benchmarkMessage5[msgTick];
+
+	if(tmp)
 	{
-		outputPorts.wavePort->BSRR = outputPorts.wavePin;
-		outputPorts.scopePort->BSRR = outputPorts.scopePin;
+		if(nrzi.flag == DISABLE_NRZI)
+		{
+			sendBit(tmp);
+		}
 	}
 	else
 	{
-		outputPorts.wavePort->BRR = outputPorts.wavePin;
-		outputPorts.scopePort->BRR = outputPorts.scopePin;
+		if(nrzi.flag == ENABLE_NRZI)
+		{
+			// stay
+			nrzi.transmitBit = !(nrzi.transmitBit);
+			sendBit(nrzi.transmitBit);
+		}
+		else
+		{
+			// send bit
+			sendBit(tmp);
+		}
 	}
 }
 
 void MessageFive::runRandomBits(void)
 {
-	if(rand() % 2)
+	sendBit(rand() % 2);
+}
+
+void MessageFive::sendBit(bool bit)
+{
+	if(bit)
 	{
 		outputPorts.wavePort->BSRR = outputPorts.wavePin;
 		outputPorts.scopePort->BSRR = outputPorts.scopePin;
@@ -65,6 +79,11 @@ void MessageFive::setOutputPorts(MSG5_OutputPorts_t outputPorts)
 void MessageFive::setMode(uint8_t mode)
 {
 	this->mode = mode;
+}
+
+void MessageFive::setNRZICoding(bool bit)
+{
+	this->nrzi.flag = bit;
 }
 
 void MessageFive::tick(void)

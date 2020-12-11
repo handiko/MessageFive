@@ -21,12 +21,20 @@
 #define STOP 0
 #define START 1
 
+#define ENABLE_NRZI	1
+#define DISABLE_NRZI 0
+
 struct MSG5_OutputPorts_t {
 	GPIO_TypeDef* wavePort;
 	GPIO_TypeDef* scopePort;
 
 	uint16_t wavePin;
 	uint16_t scopePin;
+};
+
+struct MSG5_NrziCoding_t {
+	bool flag = DISABLE_NRZI;
+	bool transmitBit = 0;
 };
 
 class MessageFive {
@@ -59,17 +67,19 @@ private:
 	uint16_t msgTick = 0;
 	MSG5_OutputPorts_t outputPorts;
 	bool startStopFlag = STOP;
+	MSG5_NrziCoding_t nrzi;
 
 	uint8_t getMode(void);
-	bool* getBenchmarkMessage(void);
 	void runBenchmark(void);
 	void runRandomBits(void);
+	void sendBit(bool bit);
 
 public:
 	MessageFive();
 
 	void setOutputPorts(MSG5_OutputPorts_t outputPorts);
 	void setMode(uint8_t mode);
+	void setNRZICoding(bool nrziFlag);
 	void tick(void);
 	void start(void);
 	void stop(void);
