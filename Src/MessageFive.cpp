@@ -9,7 +9,16 @@
 
 MessageFive::MessageFive() {
 	// TODO Auto-generated constructor stub
+	mode = MODE_BENCHMARK;
+	startStopFlag = STOP;
+}
 
+/*
+ * Private methods
+ */
+uint8_t MessageFive::getMode(void)
+{
+	return mode;
 }
 
 bool* MessageFive::getBenchmarkMessage(void)
@@ -17,25 +26,84 @@ bool* MessageFive::getBenchmarkMessage(void)
 	return benchmarkMessage5;
 }
 
-void MessageFive::tick(void)
+void MessageFive::runBenchmark(void)
 {
 	if(getBenchmarkMessage()[msgTick] % 2)
 	{
-		WAVE_GPIO_Port->BSRR = WAVE_Pin;
-		SCOPE_GPIO_Port->BSRR = SCOPE_Pin;
+		outputPorts.wavePort->BSRR = outputPorts.wavePin;
+		outputPorts.scopePort->BSRR = outputPorts.scopePin;
 	}
 	else
 	{
-		WAVE_GPIO_Port->BRR = WAVE_Pin;
-		SCOPE_GPIO_Port->BRR = SCOPE_Pin;
+		outputPorts.wavePort->BRR = outputPorts.wavePin;
+		outputPorts.scopePort->BRR = outputPorts.scopePin;
 	}
+}
 
-	msgTick++;
-
-	if(msgTick == MESSAGE_5_BIT_LEN)
+void MessageFive::runRandomBits(void)
+{
+	if(rand() % 2)
 	{
-		msgTick = 0;
+		outputPorts.wavePort->BSRR = outputPorts.wavePin;
+		outputPorts.scopePort->BSRR = outputPorts.scopePin;
 	}
+	else
+	{
+		outputPorts.wavePort->BRR = outputPorts.wavePin;
+		outputPorts.scopePort->BRR = outputPorts.scopePin;
+	}
+}
+
+/*
+ * Public methods
+ */
+void MessageFive::setOutputPorts(MSG5_OutputPorts_t outputPorts)
+{
+	this->outputPorts = outputPorts;
+}
+
+void MessageFive::setMode(uint8_t mode)
+{
+	this->mode = mode;
+}
+
+void MessageFive::tick(void)
+{
+	if(startStopFlag == START)
+	{
+		if(mode == MODE_BENCHMARK)
+		{
+			runBenchmark();
+		}
+		else if(mode == MODE_RANDOM_BITS)
+		{
+			runRandomBits();
+		}
+
+		msgTick++;
+
+		if(mode == MODE_BENCHMARK)
+		{
+			if(msgTick == MESSAGE_5_BIT_LEN)
+			{
+				msgTick = 0;
+			}
+		}
+	}
+	else
+	{
+		msgTick=0;
+	}
+}
+
+void MessageFive::start(void)
+{
+	startStopFlag = START;
+}
+
+void MessageFive::stop(void)
+{
+	startStopFlag = STOP;
 }
 
 MessageFive::~MessageFive() {
