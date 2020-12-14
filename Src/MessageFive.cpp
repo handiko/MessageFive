@@ -48,30 +48,30 @@ void MessageFive::runRandomBits(void)
 
 void MessageFive::runUserMessage(void)
 {
-	// TODO
+	if(flag.preamble && flag.send)	sendPreamble();
+	if(flag.start && flag.send)		sendFlag();
 
-	if(flag.preamble)	sendPreamble();
-	if(flag.start)		sendFlag();
+	if(flag.messageid && flag.send)	sendMessageId();
+	if(flag.repInd && flag.send)	sendRepInd();
+	if(flag.mmsi && flag.send)		sendMmsi();
+	if(flag.verInd && flag.send)	sendVerInd();
+	if(flag.imo && flag.send)		sendImo();
+	if(flag.callsign && flag.send)	sendCallsign();
+	if(flag.name && flag.send)		sendName();
+	if(flag.typeOfShip && flag.send)sendTypeOfShip();
+	if(flag.dim && flag.send)		sendDim();
+	if(flag.navdev && flag.send)	sendNavdev();
+	if(flag.eta && flag.send)		sendEta();
+	if(flag.draught && flag.send)	sendDraught();
+	if(flag.dest && flag.send)		sendDest();
+	if(flag.dte && flag.send)		sendDte();
+	if(flag.spare && flag.send)		sendSpare();
 
-	if(flag.messageid)	sendMessageId();
-	if(flag.repInd)		sendRepInd();
-	if(flag.mmsi)		sendMmsi();
-	if(flag.verInd)		sendVerInd();
-	if(flag.imo)		sendImo();
-	if(flag.callsign)	sendCallsign();
-	if(flag.name)		sendName();
-	if(flag.typeOfShip)	sendTypeOfShip();
-	if(flag.dim)		sendDim();
-	if(flag.navdev)		sendNavdev();
-	if(flag.eta)		sendEta();
-	if(flag.draught)	sendDraught();
-	if(flag.dest)		sendDest();
-	if(flag.dte)		sendDte();
-	if(flag.spare)		sendSpare();
+	//if(flag.crc)		sendCRC();
 
-	if(flag.crc)		sendCRC();
+	if(flag.end && flag.send)		sendEnd();
 
-	if(flag.end)		sendPreamble();
+	flag.send = NOW;
 }
 
 void MessageFive::sendNrziCoding(bool bit)
@@ -162,6 +162,8 @@ void MessageFive::sendPreamble(void)
 
 		flag.preamble = LATER;
 		flag.start = NOW;
+
+		flag.send = LATER;
 	}
 }
 
@@ -179,6 +181,8 @@ void MessageFive::sendFlag(void)
 
 		flag.start = LATER;
 		flag.messageid = NOW;
+
+		flag.send = LATER;
 	}
 }
 
@@ -196,6 +200,8 @@ void MessageFive::sendMessageId(void)
 
 		flag.messageid = LATER;
 		flag.repInd = NOW;
+
+		flag.send = LATER;
 	}
 }
 
@@ -213,6 +219,8 @@ void MessageFive::sendRepInd(void)
 
 		flag.repInd = LATER;
 		flag.mmsi = NOW;
+
+		flag.send = LATER;
 	}
 }
 
@@ -230,6 +238,8 @@ void MessageFive::sendMmsi(void)
 
 		flag.mmsi = LATER;
 		flag.verInd = NOW;
+
+		flag.send = LATER;
 	}
 }
 
@@ -247,6 +257,8 @@ void MessageFive::sendVerInd(void)
 
 		flag.verInd = LATER;
 		flag.imo = NOW;
+
+		flag.send = LATER;
 	}
 }
 
@@ -264,6 +276,8 @@ void MessageFive::sendImo(void)
 
 		flag.imo = LATER;
 		flag.callsign = NOW;
+
+		flag.send = LATER;
 	}
 }
 
@@ -281,58 +295,197 @@ void MessageFive::sendCallsign(void)
 
 		flag.callsign = LATER;
 		flag.name = NOW;
+
+		flag.send = LATER;
 	}
 }
 
 void MessageFive::sendName(void)
 {
+	bool tmp = shipData.name[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_NAME_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.name = LATER;
+		flag.typeOfShip = NOW;
+
+		flag.send = LATER;
+	}
 }
 
 void MessageFive::sendTypeOfShip(void)
 {
+	bool tmp = shipData.typeOfShip[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_TYPEOFSHIP_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.typeOfShip = LATER;
+		flag.dim = NOW;
+
+		flag.send = LATER;
+	}
 }
 
 void MessageFive::sendDim(void)
 {
+	bool tmp = shipData.dim[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_DIMENSION_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.dim = LATER;
+		flag.navdev = NOW;
+
+		flag.send = LATER;
+	}
 }
 
 void MessageFive::sendNavdev(void)
 {
+	bool tmp = shipData.navdev[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_NAVDEV_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.navdev = LATER;
+		flag.eta = NOW;
+
+		flag.send = LATER;
+	}
 }
 
 void MessageFive::sendEta(void)
 {
+	bool tmp = shipData.eta[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_ETA_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.eta = LATER;
+		flag.draught = NOW;
+
+		flag.send = LATER;
+	}
 }
 
 void MessageFive::sendDraught(void)
 {
+	bool tmp = shipData.draught[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_DRAUGHT_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.draught = LATER;
+		flag.dest = NOW;
+
+		flag.send = LATER;
+	}
 }
 
 void MessageFive::sendDest(void)
 {
+	bool tmp = shipData.dest[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_DEST_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.dest = LATER;
+		flag.dte = NOW;
+
+		flag.send = LATER;
+	}
 }
 
 void MessageFive::sendDte(void)
 {
+	Ticks.enableBitstuff = NOW;
 
+	sendNrziCoding(shipData.dte);
+
+	flag.dte = LATER;
+	flag.spare = NOW;
+
+	flag.send = LATER;
 }
 
 void MessageFive::sendSpare(void)
 {
+	Ticks.enableBitstuff = NOW;
 
+	sendNrziCoding(shipData.spare);
+
+	flag.spare = LATER;
+	flag.end = NOW;
+
+	flag.send = LATER;
 }
-
 
 void MessageFive::sendCRC(void)
 {
 
+}
+
+void MessageFive::sendEnd(void)
+{
+	bool tmp = (HDLC_FLAG >> Ticks.bits) & 0x01;
+
+	Ticks.enableBitstuff = LATER;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == 8)
+	{
+		Ticks.bits = 0;
+
+		flag.end = LATER;
+		flag.preamble = NOW;
+
+		flag.send = LATER;
+
+		Ticks.nrziBenchmark = 0;
+		Ticks.hdlcBenchmark = 0;
+		Ticks.randomBits = 0;
+		Ticks.bitStuff = 0;
+		Ticks.bits = 0;
+		Ticks.byte = 0;
+	}
 }
 
 void MessageFive::initMessageId(void)

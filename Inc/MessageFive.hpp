@@ -68,15 +68,15 @@ struct MSG5_InputData_t {
 	char callsign[MESSAGE_CALLSIGN_BIT_LEN/6 + 1] = "YD1SDL";
 	char name[MESSAGE_NAME_BIT_LEN/6 + 1] = "MV.HANDIKO \(^*^)/";
 	uint8_t typeOfShip = MILITARY_OPS;
-	uint16_t dimA = 53;
-	uint16_t dimB = 15;
-	uint8_t dimC = 15;
-	uint8_t dimD = 15;
+	uint16_t dimA = 0;
+	uint16_t dimB = 0;
+	uint8_t dimC = 0;
+	uint8_t dimD = 0;
 	uint8_t navdev = NAV_GPS_GLONASS;
-	uint8_t etaMonth = JANUARY;
-	uint8_t etaDay = 18;
-	uint8_t etaHour = 21;
-	uint8_t etaMinute = 12;
+	uint8_t etaMonth = 0;
+	uint8_t etaDay = 0;
+	uint8_t etaHour = 0;
+	uint8_t etaMinute = 0;
 	uint8_t draught = 48;
 	char dest[MESSAGE_DEST_BIT_LEN/6 + 1] = "Ayo kita kemana?";
 };
@@ -162,6 +162,8 @@ private:
 
 		bool crc = LATER;
 		bool end = LATER;
+
+		bool send = LATER;
 	} flag;
 
 	MSG5_InputData_t InputShipData;
@@ -212,6 +214,7 @@ private:
 	void sendSpare(void);
 
 	void sendCRC(void);
+	void sendEnd(void);
 
 	void initMessageId(void);
 	void initRepInd(void);
