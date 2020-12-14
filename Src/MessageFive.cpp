@@ -9,7 +9,7 @@
 
 MessageFive::MessageFive() {
 	// TODO Auto-generated constructor stub
-	mode = MODE_BENCHMARK;
+	mode = MODE_NRZI_BENCHMARK;
 	startStopFlag = STOP;
 	nrzi.flag = DISABLE_NRZI;
 }
@@ -17,14 +17,19 @@ MessageFive::MessageFive() {
 /*
  * Private methods
  */
-uint8_t MessageFive::getMode(void)
+void MessageFive::runNrziBenchmark(void)
 {
-	return mode;
+	sendBit(NrziBenchmarkMessage5[Ticks.nrziBenchmark++]);
+
+	if(Ticks.nrziBenchmark == NRZI_BENCHMARK_BIT_LEN)
+	{
+		Ticks.nrziBenchmark = 0;
+	}
 }
 
-void MessageFive::runBenchmark(void)
+void MessageFive::runHdlcBenchmark(void)
 {
-	bool tmp = benchmarkMessage5[Ticks.benchmark++];
+	bool tmp = HdlcBenchmarkMessage5[Ticks.hdlcBenchmark++];
 
 	if(tmp)
 	{
@@ -48,20 +53,12 @@ void MessageFive::runBenchmark(void)
 		}
 	}
 
-	if(Ticks.benchmark == MESSAGE_5_BIT_LEN)
-	{
-		Ticks.benchmark = 0;
-	}
-}
-
-void MessageFive::runHdlcBenchmark(void)
-{
-	sendBit(HdlcBenchmarkMessage5[Ticks.hdlcBenchmark++]);
-
 	if(Ticks.hdlcBenchmark == HDLC_BENCHMARK_BIT_LEN)
 	{
 		Ticks.hdlcBenchmark = 0;
 	}
+
+
 }
 
 void MessageFive::runRandomBits(void)
@@ -107,9 +104,9 @@ void MessageFive::tick(void)
 {
 	if(startStopFlag == START)
 	{
-		if(mode == MODE_BENCHMARK)
+		if(mode == MODE_NRZI_BENCHMARK)
 		{
-			runBenchmark();
+			runNrziBenchmark();
 		}
 		else if(mode == MODE_HDLC_BENCHMARK)
 		{
@@ -122,7 +119,7 @@ void MessageFive::tick(void)
 	}
 	else
 	{
-		Ticks.benchmark = 0;
+		Ticks.nrziBenchmark = 0;
 		Ticks.hdlcBenchmark = 0;
 		Ticks.randomBits = 0;
 	}
