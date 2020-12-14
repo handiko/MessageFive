@@ -32,6 +32,8 @@
 
 #define PREAMBLE_BYTE_LEN 3
 #define HDLC_FLAG (0x7E)
+#define BITSTUFFING_LEN 5
+
 #define NOW 1
 #define LATER 0
 
@@ -131,16 +133,11 @@ private:
 		uint16_t nrziBenchmark = 0;
 		uint16_t hdlcBenchmark = 0;
 		uint16_t randomBits = 0;
-		uint16_t userMessage = 0;
+		bool enableBitstuff = LATER;
 		uint8_t bitStuff = 0;
-		struct Ticks_preamble_t {
-			uint8_t bits = 0;
-			uint8_t byte = 0;
-		} preamble;
-		struct Ticks_flag_t {
-			uint8_t bits = 0;
-			uint8_t byte = 0;
-		} flag;
+		uint8_t bits = 0;
+		uint8_t byte = 0;
+		bool calcCrc = LATER;
 	} Ticks;
 
 	struct MSG5_Protocol_Flag_t {
@@ -192,6 +189,7 @@ private:
 	void runRandomBits(void);
 	void runUserMessage(void);
 
+	void sendNrziCoding(bool bit);
 	void sendBit(bool bit);
 
 	void sendPreamble(void);

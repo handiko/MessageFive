@@ -33,27 +33,7 @@ void MessageFive::runHdlcBenchmark(void)
 {
 	bool tmp = HdlcBenchmarkMessage5[Ticks.hdlcBenchmark++];
 
-	if(tmp)
-	{
-		if(nrzi.flag == DISABLE_NRZI)
-		{
-			sendBit(tmp);
-		}
-	}
-	else
-	{
-		if(nrzi.flag == ENABLE_NRZI)
-		{
-			// stay
-			nrzi.transmitBit = !(nrzi.transmitBit);
-			sendBit(nrzi.transmitBit);
-		}
-		else
-		{
-			// send bit
-			sendBit(tmp);
-		}
-	}
+	sendNrziCoding(tmp);
 
 	if(Ticks.hdlcBenchmark == HDLC_BENCHMARK_BIT_LEN)
 	{
@@ -63,7 +43,7 @@ void MessageFive::runHdlcBenchmark(void)
 
 void MessageFive::runRandomBits(void)
 {
-	sendBit(rand() % 2);
+	sendNrziCoding(rand() % 2);
 }
 
 void MessageFive::runUserMessage(void)
@@ -94,6 +74,58 @@ void MessageFive::runUserMessage(void)
 	if(flag.end)		sendPreamble();
 }
 
+void MessageFive::sendNrziCoding(bool bit)
+{
+	if(bit && (Ticks.enableBitstuff==NOW))
+	{
+		Ticks.bitStuff++;
+
+		if(Ticks.bitStuff == BITSTUFFING_LEN)
+		{
+			bit = 0;
+
+			Ticks.bitStuff = 0;
+		}
+		else
+		{
+			Ticks.bits++;
+
+			// calc CRC
+		}
+	}
+	else
+	{
+		Ticks.bitStuff = 0;
+		Ticks.bits++;
+
+		// calc CRC
+	}
+
+	// lastly implement nrzi coding
+	if(bit)
+	{
+		if(nrzi.flag == DISABLE_NRZI)
+		{
+			sendBit(bit);
+		}
+
+		//if NRZI and bit 1, keep last transmitted bit
+	}
+	else
+	{
+		if(nrzi.flag == ENABLE_NRZI)
+		{
+			// if NRZI and bit 0, flip last transmitted bit
+			nrzi.transmitBit = !(nrzi.transmitBit);
+			sendBit(nrzi.transmitBit);
+		}
+		else
+		{
+			sendBit(bit);
+		}
+	}
+}
+
 void MessageFive::sendBit(bool bit)
 {
 	if(bit)
@@ -112,39 +144,22 @@ void MessageFive::sendBit(bool bit)
 
 void MessageFive::sendPreamble(void)
 {
-	bool tmp = ((Ticks.preamble.bits++) % 2);
+	bool tmp = ((Ticks.bits) % 2);
 
-	if(tmp)
+	Ticks.enableBitstuff = LATER;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == 8)
 	{
-		if(nrzi.flag == DISABLE_NRZI)
-		{
-			sendBit(tmp);
-		}
-	}
-	else
-	{
-		if(nrzi.flag == ENABLE_NRZI)
-		{
-			// stay
-			nrzi.transmitBit = !(nrzi.transmitBit);
-			sendBit(nrzi.transmitBit);
-		}
-		else
-		{
-			// send bit
-			sendBit(tmp);
-		}
+		Ticks.bits = 0;
+		Ticks.byte++;
 	}
 
-	if(Ticks.preamble.bits == 8)
+	if(Ticks.byte == PREAMBLE_BYTE_LEN)
 	{
-		Ticks.preamble.bits = 0;
-		Ticks.preamble.byte++;
-	}
+		Ticks.byte = 0;
 
-	if(Ticks.preamble.byte == PREAMBLE_BYTE_LEN)
-	{
-		Ticks.preamble.byte = 0;
 		flag.preamble = LATER;
 		flag.start = NOW;
 	}
@@ -152,66 +167,121 @@ void MessageFive::sendPreamble(void)
 
 void MessageFive::sendFlag(void)
 {
-	bool tmp = (HDLC_FLAG >> Ticks.flag.bits++) & 0x01;
+	bool tmp = (HDLC_FLAG >> Ticks.bits) & 0x01;
 
-	if(tmp)
-	{
-		if(nrzi.flag == DISABLE_NRZI)
-		{
-			sendBit(tmp);
-		}
-	}
-	else
-	{
-		if(nrzi.flag == ENABLE_NRZI)
-		{
-			// stay
-			nrzi.transmitBit = !(nrzi.transmitBit);
-			sendBit(nrzi.transmitBit);
-		}
-		else
-		{
-			// send bit
-			sendBit(tmp);
-		}
-	}
+	Ticks.enableBitstuff = LATER;
 
-	if(Ticks.flag.bits == 8)
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == 8)
 	{
-		Ticks.flag.bits = 0;
+		Ticks.bits = 0;
 
 		flag.start = LATER;
+		flag.messageid = NOW;
 	}
 }
 
 void MessageFive::sendMessageId(void)
 {
+	bool tmp = shipData.messageId[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_ID_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.messageid = LATER;
+		flag.repInd = NOW;
+	}
 }
 
 void MessageFive::sendRepInd(void)
 {
+	bool tmp = shipData.repInd[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_REPIND_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.repInd = LATER;
+		flag.mmsi = NOW;
+	}
 }
 
 void MessageFive::sendMmsi(void)
 {
+	bool tmp = shipData.mmsi[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_MMSI_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.mmsi = LATER;
+		flag.verInd = NOW;
+	}
 }
 
 void MessageFive::sendVerInd(void)
 {
+	bool tmp = shipData.verInd[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_VERIND_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.verInd = LATER;
+		flag.imo = NOW;
+	}
 }
 
 void MessageFive::sendImo(void)
 {
+	bool tmp = shipData.imo[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_IMO_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.imo = LATER;
+		flag.callsign = NOW;
+	}
 }
 
 void MessageFive::sendCallsign(void)
 {
+	bool tmp = shipData.callsign[Ticks.bits];
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == MESSAGE_CALLSIGN_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.callsign = LATER;
+		flag.name = NOW;
+	}
 }
 
 void MessageFive::sendName(void)
@@ -627,10 +697,9 @@ void MessageFive::tick(void)
 		Ticks.nrziBenchmark = 0;
 		Ticks.hdlcBenchmark = 0;
 		Ticks.randomBits = 0;
-		Ticks.userMessage = 0;
 		Ticks.bitStuff = 0;
-		Ticks.preamble.bits = 0;
-		Ticks.preamble.byte = 0;
+		Ticks.bits = 0;
+		Ticks.byte = 0;
 	}
 }
 
