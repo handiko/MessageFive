@@ -66,6 +66,34 @@ void MessageFive::runRandomBits(void)
 	sendBit(rand() % 2);
 }
 
+void MessageFive::runUserMessage(void)
+{
+	// TODO
+
+	if(flag.preamble)	sendPreamble();
+	if(flag.start)		sendFlag();
+
+	if(flag.messageid)	sendMessageId();
+	if(flag.repInd)		sendRepInd();
+	if(flag.mmsi)		sendMmsi();
+	if(flag.verInd)		sendVerInd();
+	if(flag.imo)		sendImo();
+	if(flag.callsign)	sendCallsign();
+	if(flag.name)		sendName();
+	if(flag.typeOfShip)	sendTypeOfShip();
+	if(flag.dim)		sendDim();
+	if(flag.navdev)		sendNavdev();
+	if(flag.eta)		sendEta();
+	if(flag.draught)	sendDraught();
+	if(flag.dest)		sendDest();
+	if(flag.dte)		sendDte();
+	if(flag.spare)		sendSpare();
+
+	if(flag.crc)		sendCRC();
+
+	if(flag.end)		sendPreamble();
+}
+
 void MessageFive::sendBit(bool bit)
 {
 	if(bit)
@@ -80,6 +108,161 @@ void MessageFive::sendBit(bool bit)
 		outputPorts.scopePort->BRR = outputPorts.scopePin;
 		outputPorts.soundPort->BRR = outputPorts.soundPin;
 	}
+}
+
+void MessageFive::sendPreamble(void)
+{
+	bool tmp = ((Ticks.preamble.bits++) % 2);
+
+	if(tmp)
+	{
+		if(nrzi.flag == DISABLE_NRZI)
+		{
+			sendBit(tmp);
+		}
+	}
+	else
+	{
+		if(nrzi.flag == ENABLE_NRZI)
+		{
+			// stay
+			nrzi.transmitBit = !(nrzi.transmitBit);
+			sendBit(nrzi.transmitBit);
+		}
+		else
+		{
+			// send bit
+			sendBit(tmp);
+		}
+	}
+
+	if(Ticks.preamble.bits == 8)
+	{
+		Ticks.preamble.bits = 0;
+		Ticks.preamble.byte++;
+	}
+
+	if(Ticks.preamble.byte == PREAMBLE_BYTE_LEN)
+	{
+		Ticks.preamble.byte = 0;
+		flag.preamble = LATER;
+		flag.start = NOW;
+	}
+}
+
+void MessageFive::sendFlag(void)
+{
+	bool tmp = (HDLC_FLAG >> Ticks.flag.bits++) & 0x01;
+
+	if(tmp)
+	{
+		if(nrzi.flag == DISABLE_NRZI)
+		{
+			sendBit(tmp);
+		}
+	}
+	else
+	{
+		if(nrzi.flag == ENABLE_NRZI)
+		{
+			// stay
+			nrzi.transmitBit = !(nrzi.transmitBit);
+			sendBit(nrzi.transmitBit);
+		}
+		else
+		{
+			// send bit
+			sendBit(tmp);
+		}
+	}
+
+	if(Ticks.flag.bits == 8)
+	{
+		Ticks.flag.bits = 0;
+
+		flag.start = LATER;
+	}
+}
+
+void MessageFive::sendMessageId(void)
+{
+
+}
+
+void MessageFive::sendRepInd(void)
+{
+
+}
+
+void MessageFive::sendMmsi(void)
+{
+
+}
+
+void MessageFive::sendVerInd(void)
+{
+
+}
+
+void MessageFive::sendImo(void)
+{
+
+}
+
+void MessageFive::sendCallsign(void)
+{
+
+}
+
+void MessageFive::sendName(void)
+{
+
+}
+
+void MessageFive::sendTypeOfShip(void)
+{
+
+}
+
+void MessageFive::sendDim(void)
+{
+
+}
+
+void MessageFive::sendNavdev(void)
+{
+
+}
+
+void MessageFive::sendEta(void)
+{
+
+}
+
+void MessageFive::sendDraught(void)
+{
+
+}
+
+void MessageFive::sendDest(void)
+{
+
+}
+
+void MessageFive::sendDte(void)
+{
+
+}
+
+void MessageFive::sendSpare(void)
+{
+
+}
+
+
+void MessageFive::sendCRC(void)
+{
+
 }
 
 void MessageFive::initMessageId(void)
@@ -434,12 +617,20 @@ void MessageFive::tick(void)
 		{
 			runRandomBits();
 		}
+		else if(mode == MODE_USER_MESSAGE)
+		{
+			runUserMessage();
+		}
 	}
 	else
 	{
 		Ticks.nrziBenchmark = 0;
 		Ticks.hdlcBenchmark = 0;
 		Ticks.randomBits = 0;
+		Ticks.userMessage = 0;
+		Ticks.bitStuff = 0;
+		Ticks.preamble.bits = 0;
+		Ticks.preamble.byte = 0;
 	}
 }
 

@@ -18,6 +18,7 @@
 #define MODE_NRZI_BENCHMARK 0
 #define MODE_HDLC_BENCHMARK 1
 #define MODE_RANDOM_BITS 2
+#define MODE_USER_MESSAGE 3
 
 #define STOP 0
 #define START 1
@@ -28,6 +29,11 @@
 #define MESSAGE_DEFAULT	0
 
 #define MESSAGE_5_BIT_LEN 424
+
+#define PREAMBLE_BYTE_LEN 3
+#define HDLC_FLAG (0x7E)
+#define NOW 1
+#define LATER 0
 
 #define MESSAGE_ID_BIT_LEN	6
 #define MESSAGE_REPIND_BIT_LEN	2
@@ -50,11 +56,6 @@ struct MSG5_OutputPorts_t {
 	uint16_t wavePin;
 	uint16_t scopePin;
 	uint16_t soundPin;
-};
-
-struct MSG5_NrziCoding_t {
-	bool flag = DISABLE_NRZI;
-	bool transmitBit = 0;
 };
 
 struct MSG5_InputData_t {
@@ -121,13 +122,50 @@ private:
 	uint8_t mode = MODE_NRZI_BENCHMARK;
 	MSG5_OutputPorts_t outputPorts;
 	bool startStopFlag = STOP;
-	MSG5_NrziCoding_t nrzi;
+	struct MSG5_NrziCoding_t {
+		bool flag = DISABLE_NRZI;
+		bool transmitBit = 0;
+	} nrzi;
 
 	struct MSG5_Ticks_t {
 		uint16_t nrziBenchmark = 0;
 		uint16_t hdlcBenchmark = 0;
 		uint16_t randomBits = 0;
+		uint16_t userMessage = 0;
+		uint8_t bitStuff = 0;
+		struct Ticks_preamble_t {
+			uint8_t bits = 0;
+			uint8_t byte = 0;
+		} preamble;
+		struct Ticks_flag_t {
+			uint8_t bits = 0;
+			uint8_t byte = 0;
+		} flag;
 	} Ticks;
+
+	struct MSG5_Protocol_Flag_t {
+		bool preamble = NOW;
+		bool start = LATER;
+
+		bool messageid = LATER;
+		bool repInd = LATER;
+		bool mmsi = LATER;
+		bool verInd = LATER;
+		bool imo = LATER;
+		bool callsign = LATER;
+		bool name = LATER;
+		bool typeOfShip = LATER;
+		bool dim = LATER;
+		bool navdev = LATER;
+		bool eta = LATER;
+		bool draught = LATER;
+		bool dest = LATER;
+		bool dte = LATER;
+		bool spare = LATER;
+
+		bool crc = LATER;
+		bool end = LATER;
+	} flag;
 
 	MSG5_InputData_t InputShipData;
 
@@ -152,7 +190,30 @@ private:
 	void runNrziBenchmark(void);
 	void runHdlcBenchmark(void);
 	void runRandomBits(void);
+	void runUserMessage(void);
+
 	void sendBit(bool bit);
+
+	void sendPreamble(void);
+	void sendFlag(void);
+
+	void sendMessageId(void);
+	void sendRepInd(void);
+	void sendMmsi(void);
+	void sendVerInd(void);
+	void sendImo(void);
+	void sendCallsign(void);
+	void sendName(void);
+	void sendTypeOfShip(void);
+	void sendDim(void);
+	void sendNavdev(void);
+	void sendEta(void);
+	void sendDraught(void);
+	void sendDest(void);
+	void sendDte(void);
+	void sendSpare(void);
+
+	void sendCRC(void);
 
 	void initMessageId(void);
 	void initRepInd(void);
