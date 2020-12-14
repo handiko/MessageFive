@@ -57,8 +57,6 @@ void MessageFive::runHdlcBenchmark(void)
 	{
 		Ticks.hdlcBenchmark = 0;
 	}
-
-
 }
 
 void MessageFive::runRandomBits(void)
