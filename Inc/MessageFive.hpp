@@ -62,8 +62,8 @@ struct MSG5_InputData_t {
 	uint32_t mmsi = 525777777;
 	uint8_t verInd = MESSAGE_DEFAULT;
 	uint32_t imo = MESSAGE_DEFAULT;
-	char callsign[MESSAGE_CALLSIGN_BIT_LEN/6] = "YD1SDL";
-	char name[MESSAGE_NAME_BIT_LEN/6] = "MV.HANDIKO \(^*^)/";
+	char callsign[MESSAGE_CALLSIGN_BIT_LEN/6 + 1] = "YD1SDL";
+	char name[MESSAGE_NAME_BIT_LEN/6 + 1] = "MV.HANDIKO \(^*^)/";
 	uint8_t typeOfShip = MILITARY_OPS;
 	uint16_t dimA = 53;
 	uint16_t dimB = 15;
@@ -75,9 +75,7 @@ struct MSG5_InputData_t {
 	uint8_t etaHour = 21;
 	uint8_t etaMinute = 12;
 	uint8_t draught = 48;
-	char dest[MESSAGE_DEST_BIT_LEN/6] = "Ayo kita kemana?";
-	bool dte = MESSAGE_DEFAULT;
-	bool spare = MESSAGE_DEFAULT;
+	char dest[MESSAGE_DEST_BIT_LEN/6 + 1] = "Ayo kita kemana?";
 };
 
 class MessageFive {
@@ -147,8 +145,8 @@ private:
 		bool eta[MESSAGE_ETA_BIT_LEN];
 		bool draught[MESSAGE_DRAUGHT_BIT_LEN];
 		bool dest[MESSAGE_DEST_BIT_LEN];
-		bool dte;
-		bool spare;
+		const bool dte = MESSAGE_DEFAULT;
+		const bool spare = MESSAGE_DEFAULT;
 	} shipData;
 
 	void runNrziBenchmark(void);
@@ -156,7 +154,37 @@ private:
 	void runRandomBits(void);
 	void sendBit(bool bit);
 
+	void initMessageId(void);
+	void initRepInd(void);
+	void initMmsi(void);
+	void initVerInd(void);
+	void initImo(void);
+	void initCallsign(void);
+	void initName(void);
+	void initTypeOfShip(void);
+	void initDim(void);
+	void initNavdev(void);
+	void initEta(void);
+	void initDraught(void);
+	void initDest(void);
+	void initDte(void);
+	void initSpare(void);
+	void initDataAll(void);
+
 	void processInputData(void);
+
+	void processRepInd(void);
+	void processMmsi(void);
+	void processVerInd(void);
+	void processImo(void);
+	void processCallsign(void);
+	void processName(void);
+	void processTypeOfShip(void);
+	void processDim(void);
+	void processNavdev(void);
+	void processEta(void);
+	void processDraught(void);
+	void processDest(void);
 
 public:
 	MessageFive();
