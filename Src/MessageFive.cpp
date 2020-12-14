@@ -24,7 +24,7 @@ uint8_t MessageFive::getMode(void)
 
 void MessageFive::runBenchmark(void)
 {
-	bool tmp = benchmarkMessage5[msgTick];
+	bool tmp = benchmarkMessage5[Ticks.benchmark++];
 
 	if(tmp)
 	{
@@ -46,6 +46,21 @@ void MessageFive::runBenchmark(void)
 			// send bit
 			sendBit(tmp);
 		}
+	}
+
+	if(Ticks.benchmark == MESSAGE_5_BIT_LEN)
+	{
+		Ticks.benchmark = 0;
+	}
+}
+
+void MessageFive::runHdlcBenchmark(void)
+{
+	sendBit(HdlcBenchmarkMessage5[Ticks.hdlcBenchmark++]);
+
+	if(Ticks.hdlcBenchmark == HDLC_BENCHMARK_BIT_LEN)
+	{
+		Ticks.hdlcBenchmark = 0;
 	}
 }
 
@@ -96,24 +111,20 @@ void MessageFive::tick(void)
 		{
 			runBenchmark();
 		}
+		else if(mode == MODE_HDLC_BENCHMARK)
+		{
+			runHdlcBenchmark();
+		}
 		else if(mode == MODE_RANDOM_BITS)
 		{
 			runRandomBits();
 		}
-
-		msgTick++;
-
-		if(mode == MODE_BENCHMARK)
-		{
-			if(msgTick == MESSAGE_5_BIT_LEN)
-			{
-				msgTick = 0;
-			}
-		}
 	}
 	else
 	{
-		msgTick=0;
+		Ticks.benchmark = 0;
+		Ticks.hdlcBenchmark = 0;
+		Ticks.randomBits = 0;
 	}
 }
 
