@@ -80,6 +80,11 @@ void MessageFive::sendBit(bool bit)
 	}
 }
 
+void MessageFive::processInputData(void)
+{
+
+}
+
 /*
  * Public methods
  */
@@ -131,6 +136,13 @@ void MessageFive::start(void)
 void MessageFive::stop(void)
 {
 	startStopFlag = STOP;
+}
+
+void MessageFive::setMessage(MSG5_InputData_t InputShipData)
+{
+	this->InputShipData = InputShipData;
+
+	processInputData();
 }
 
 MessageFive::~MessageFive() {
