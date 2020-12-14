@@ -140,6 +140,11 @@ private:
 		bool calcCrc = LATER;
 	} Ticks;
 
+	struct MSG5_CRC_t {
+		uint32_t value = 0xffff;
+		uint32_t mask = 0x8408;
+	} crc;
+
 	struct MSG5_Protocol_Flag_t {
 		bool preamble = NOW;
 		bool start = LATER;
@@ -192,6 +197,7 @@ private:
 	void runUserMessage(void);
 
 	void sendNrziCoding(bool bit);
+	void calcCRC(bool bit);
 	void sendBit(bool bit);
 
 	void sendPreamble(void);

@@ -67,7 +67,7 @@ void MessageFive::runUserMessage(void)
 	if(flag.dte && flag.send)		sendDte();
 	if(flag.spare && flag.send)		sendSpare();
 
-	//if(flag.crc)		sendCRC();
+	if(flag.crc && flag.send)		sendCRC();
 
 	if(flag.end && flag.send)		sendEnd();
 
@@ -90,7 +90,7 @@ void MessageFive::sendNrziCoding(bool bit)
 		{
 			Ticks.bits++;
 
-			// calc CRC
+			calcCRC(bit);
 		}
 	}
 	else
@@ -98,7 +98,7 @@ void MessageFive::sendNrziCoding(bool bit)
 		Ticks.bitStuff = 0;
 		Ticks.bits++;
 
-		// calc CRC
+		calcCRC(bit);
 	}
 
 	// lastly implement nrzi coding
@@ -116,7 +116,7 @@ void MessageFive::sendNrziCoding(bool bit)
 		if(nrzi.flag == ENABLE_NRZI)
 		{
 			// if NRZI and bit 0, flip last transmitted bit
-			nrzi.transmitBit = !(nrzi.transmitBit);
+			nrzi.transmitBit ^= 1;
 			sendBit(nrzi.transmitBit);
 		}
 		else
@@ -124,6 +124,17 @@ void MessageFive::sendNrziCoding(bool bit)
 			sendBit(bit);
 		}
 	}
+}
+
+void MessageFive::calcCRC(bool bit)
+{
+	uint32_t xor_in;
+
+	xor_in = crc.value ^ bit;
+	crc.value >>= 1;
+
+	if(xor_in & 0x01)
+		crc.value ^= crc.mask;
 }
 
 void MessageFive::sendBit(bool bit)
@@ -452,14 +463,30 @@ void MessageFive::sendSpare(void)
 	sendNrziCoding(shipData.spare);
 
 	flag.spare = LATER;
-	flag.end = NOW;
+	flag.crc = NOW;
 
 	flag.send = LATER;
+
+	Ticks.bits = 0;
 }
 
 void MessageFive::sendCRC(void)
 {
+	bool tmp = (crc.value >> Ticks.bits) & 0x01;
 
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == 16)
+	{
+		Ticks.bits = 0;
+
+		flag.crc = LATER;
+		flag.end = NOW;
+
+		flag.send = LATER;
+	}
 }
 
 void MessageFive::sendEnd(void)
