@@ -14,11 +14,15 @@
 
 #define NRZI_BENCHMARK_BIT_LEN	(964/2)
 #define HDLC_BENCHMARK_BIT_LEN	(964/2)
+#define BITSTUFF_TEST_BIT_LEN 482
+#define TEST_CRC_BIT_LEN (8 * 1)
 
 #define MODE_NRZI_BENCHMARK 0
 #define MODE_HDLC_BENCHMARK 1
 #define MODE_RANDOM_BITS 2
 #define MODE_USER_MESSAGE 3
+#define MODE_TEST_BITSTUFF 4
+#define MODE_TEST_CRC 5
 
 #define STOP 0
 #define START 1
@@ -32,7 +36,9 @@
 
 #define PREAMBLE_BYTE_LEN 3
 #define HDLC_FLAG (0x7E)
-#define BITSTUFFING_LEN 5
+#define BITSTUFFING_LEN 6
+#define INIT_CRC_VALUE (0xFFFFUL)
+#define CRC_MASK (0b1000000100001)
 
 #define NOW 1
 #define LATER 0
@@ -121,6 +127,34 @@ private:
 			0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,1,0,1,0,1,0,0,0,0,0,1,1,1,1,1,
 			1,0
 	};
+	const bool TestBitstuffing[BITSTUFF_TEST_BIT_LEN] = {
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	};
+	const bool testCRC[TEST_CRC_BIT_LEN] = {
+		0,0,0,0,0,0,0,1
+	};
 	uint8_t mode = MODE_NRZI_BENCHMARK;
 	MSG5_OutputPorts_t outputPorts;
 	bool startStopFlag = STOP;
@@ -134,15 +168,15 @@ private:
 		uint16_t hdlcBenchmark = 0;
 		uint16_t randomBits = 0;
 		bool enableBitstuff = LATER;
-		uint8_t bitStuff = 0;
-		uint8_t bits = 0;
-		uint8_t byte = 0;
+		uint16_t bitStuff = 0;
+		uint16_t bits = 0;
+		uint16_t byte = 0;
 		bool calcCrc = LATER;
 	} Ticks;
 
 	struct MSG5_CRC_t {
-		uint32_t value = 0xffff;
-		uint32_t mask = 0x8408;
+		uint16_t value = INIT_CRC_VALUE;
+		bool flag = 0;
 	} crc;
 
 	struct MSG5_Protocol_Flag_t {
@@ -167,6 +201,8 @@ private:
 
 		bool crc = LATER;
 		bool end = LATER;
+
+		bool testCRC = LATER;
 
 		bool send = LATER;
 	} flag;
@@ -195,6 +231,8 @@ private:
 	void runHdlcBenchmark(void);
 	void runRandomBits(void);
 	void runUserMessage(void);
+	void runTestBitstuff(void);
+	void runTestCRC(void);
 
 	void sendNrziCoding(bool bit);
 	void calcCRC(bool bit);
@@ -221,6 +259,8 @@ private:
 
 	void sendCRC(void);
 	void sendEnd(void);
+
+	void sendTestCRC(void);
 
 	void initMessageId(void);
 	void initRepInd(void);

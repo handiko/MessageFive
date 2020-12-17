@@ -74,6 +74,34 @@ void MessageFive::runUserMessage(void)
 	flag.send = NOW;
 }
 
+void MessageFive::runTestBitstuff(void)
+{
+	bool tmp = TestBitstuffing[Ticks.bits];
+
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == BITSTUFF_TEST_BIT_LEN)
+	{
+		Ticks.bits = 0;
+	}
+}
+
+void MessageFive::runTestCRC(void)
+{
+	if(flag.preamble && flag.send)	sendPreamble();
+	if(flag.start && flag.send)		sendFlag();
+
+	if(flag.testCRC && flag.send)	sendTestCRC();
+
+	if(flag.crc && flag.send)		sendCRC();
+
+	if(flag.end && flag.send)		sendEnd();
+
+	flag.send = NOW;
+}
+
 void MessageFive::sendNrziCoding(bool bit)
 {
 	if(bit && (Ticks.enableBitstuff==NOW))
@@ -90,7 +118,10 @@ void MessageFive::sendNrziCoding(bool bit)
 		{
 			Ticks.bits++;
 
-			calcCRC(bit);
+			if(crc.flag)
+			{
+				calcCRC(bit);
+			}
 		}
 	}
 	else
@@ -98,7 +129,10 @@ void MessageFive::sendNrziCoding(bool bit)
 		Ticks.bitStuff = 0;
 		Ticks.bits++;
 
-		calcCRC(bit);
+		if(crc.flag)
+		{
+			calcCRC(bit);
+		}
 	}
 
 	// lastly implement nrzi coding
@@ -110,6 +144,7 @@ void MessageFive::sendNrziCoding(bool bit)
 		}
 
 		//if NRZI and bit 1, keep last transmitted bit
+		sendBit(nrzi.transmitBit);
 	}
 	else
 	{
@@ -128,13 +163,21 @@ void MessageFive::sendNrziCoding(bool bit)
 
 void MessageFive::calcCRC(bool bit)
 {
-	uint32_t xor_in;
+	/*uint32_t xor_in;
 
 	xor_in = crc.value ^ bit;
 	crc.value >>= 1;
 
 	if(xor_in & 0x01)
-		crc.value ^= crc.mask;
+		crc.value ^= crc.mask;*/
+
+	bool xor_in = (crc.value >> 15) & 0x01;
+	crc.value = (crc.value << 1) + bit;
+
+	if(xor_in)
+	{
+		crc.value ^= CRC_MASK;
+	}
 }
 
 void MessageFive::sendBit(bool bit)
@@ -156,6 +199,8 @@ void MessageFive::sendBit(bool bit)
 void MessageFive::sendPreamble(void)
 {
 	bool tmp = ((Ticks.bits) % 2);
+
+	crc.flag = 0;
 
 	Ticks.enableBitstuff = LATER;
 
@@ -182,6 +227,8 @@ void MessageFive::sendFlag(void)
 {
 	bool tmp = (HDLC_FLAG >> Ticks.bits) & 0x01;
 
+	crc.flag = 0;
+
 	Ticks.enableBitstuff = LATER;
 
 	sendNrziCoding(tmp);
@@ -191,15 +238,26 @@ void MessageFive::sendFlag(void)
 		Ticks.bits = 0;
 
 		flag.start = LATER;
-		flag.messageid = NOW;
+		if(mode == MODE_TEST_CRC)
+		{
+			flag.testCRC = NOW;
+		}
+		else
+		{
+			flag.messageid = NOW;
+		}
 
 		flag.send = LATER;
+
+		crc.value = INIT_CRC_VALUE;
 	}
 }
 
 void MessageFive::sendMessageId(void)
 {
 	bool tmp = shipData.messageId[Ticks.bits];
+
+	crc.flag = 1;
 
 	Ticks.enableBitstuff = NOW;
 
@@ -220,6 +278,8 @@ void MessageFive::sendRepInd(void)
 {
 	bool tmp = shipData.repInd[Ticks.bits];
 
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(tmp);
@@ -238,6 +298,8 @@ void MessageFive::sendRepInd(void)
 void MessageFive::sendMmsi(void)
 {
 	bool tmp = shipData.mmsi[Ticks.bits];
+
+	crc.flag = 1;
 
 	Ticks.enableBitstuff = NOW;
 
@@ -258,6 +320,8 @@ void MessageFive::sendVerInd(void)
 {
 	bool tmp = shipData.verInd[Ticks.bits];
 
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(tmp);
@@ -276,6 +340,8 @@ void MessageFive::sendVerInd(void)
 void MessageFive::sendImo(void)
 {
 	bool tmp = shipData.imo[Ticks.bits];
+
+	crc.flag = 1;
 
 	Ticks.enableBitstuff = NOW;
 
@@ -296,6 +362,8 @@ void MessageFive::sendCallsign(void)
 {
 	bool tmp = shipData.callsign[Ticks.bits];
 
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(tmp);
@@ -314,6 +382,8 @@ void MessageFive::sendCallsign(void)
 void MessageFive::sendName(void)
 {
 	bool tmp = shipData.name[Ticks.bits];
+
+	crc.flag = 1;
 
 	Ticks.enableBitstuff = NOW;
 
@@ -334,6 +404,8 @@ void MessageFive::sendTypeOfShip(void)
 {
 	bool tmp = shipData.typeOfShip[Ticks.bits];
 
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(tmp);
@@ -352,6 +424,8 @@ void MessageFive::sendTypeOfShip(void)
 void MessageFive::sendDim(void)
 {
 	bool tmp = shipData.dim[Ticks.bits];
+
+	crc.flag = 1;
 
 	Ticks.enableBitstuff = NOW;
 
@@ -372,6 +446,8 @@ void MessageFive::sendNavdev(void)
 {
 	bool tmp = shipData.navdev[Ticks.bits];
 
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(tmp);
@@ -390,6 +466,8 @@ void MessageFive::sendNavdev(void)
 void MessageFive::sendEta(void)
 {
 	bool tmp = shipData.eta[Ticks.bits];
+
+	crc.flag = 1;
 
 	Ticks.enableBitstuff = NOW;
 
@@ -410,6 +488,8 @@ void MessageFive::sendDraught(void)
 {
 	bool tmp = shipData.draught[Ticks.bits];
 
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(tmp);
@@ -429,6 +509,8 @@ void MessageFive::sendDest(void)
 {
 	bool tmp = shipData.dest[Ticks.bits];
 
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(tmp);
@@ -446,6 +528,8 @@ void MessageFive::sendDest(void)
 
 void MessageFive::sendDte(void)
 {
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(shipData.dte);
@@ -458,6 +542,8 @@ void MessageFive::sendDte(void)
 
 void MessageFive::sendSpare(void)
 {
+	crc.flag = 1;
+
 	Ticks.enableBitstuff = NOW;
 
 	sendNrziCoding(shipData.spare);
@@ -468,11 +554,15 @@ void MessageFive::sendSpare(void)
 	flag.send = LATER;
 
 	Ticks.bits = 0;
+
+	crc.value = ~crc.value;
 }
 
 void MessageFive::sendCRC(void)
 {
-	bool tmp = (crc.value >> Ticks.bits) & 0x01;
+	bool tmp = !((crc.value >> (15-Ticks.bits)) & 0x01);
+
+	crc.flag = 0;
 
 	Ticks.enableBitstuff = NOW;
 
@@ -493,6 +583,8 @@ void MessageFive::sendEnd(void)
 {
 	bool tmp = (HDLC_FLAG >> Ticks.bits) & 0x01;
 
+	crc.flag = 0;
+
 	Ticks.enableBitstuff = LATER;
 
 	sendNrziCoding(tmp);
@@ -512,6 +604,27 @@ void MessageFive::sendEnd(void)
 		Ticks.bitStuff = 0;
 		Ticks.bits = 0;
 		Ticks.byte = 0;
+	}
+}
+
+void MessageFive::sendTestCRC(void)
+{
+	bool tmp = testCRC[Ticks.bits];
+
+	crc.flag = 1;
+
+	Ticks.enableBitstuff = NOW;
+
+	sendNrziCoding(tmp);
+
+	if(Ticks.bits == TEST_CRC_BIT_LEN)
+	{
+		Ticks.bits = 0;
+
+		flag.testCRC = LATER;
+		flag.crc = NOW;
+
+		flag.send = LATER;
 	}
 }
 
@@ -870,6 +983,14 @@ void MessageFive::tick(void)
 		else if(mode == MODE_USER_MESSAGE)
 		{
 			runUserMessage();
+		}
+		else if(mode == MODE_TEST_BITSTUFF)
+		{
+			runTestBitstuff();
+		}
+		else if(mode == MODE_TEST_CRC)
+		{
+			runTestCRC();
 		}
 	}
 	else
