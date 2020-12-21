@@ -171,10 +171,11 @@ void MessageFive::calcCRC(bool bit)
 	if(xor_in & 0x01)
 		crc.value ^= crc.mask;*/
 
-	bool xor_in = (crc.value >> 15) & 0x01;
-	crc.value = (crc.value << 1) + bit;
+	uint16_t xor_in = crc.value >> 15;
+	crc.value <<= 1;
+	crc.value |= bit;
 
-	if(xor_in)
+	if(xor_in & 0x01)
 	{
 		crc.value ^= CRC_MASK;
 	}
@@ -617,7 +618,7 @@ void MessageFive::sendTestCRC(void)
 
 	sendNrziCoding(tmp);
 
-	if(Ticks.bits == TEST_CRC_BIT_LEN)
+	if(Ticks.bits == 8)
 	{
 		Ticks.bits = 0;
 
